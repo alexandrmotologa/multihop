@@ -5,7 +5,7 @@ bin/
 *.dll
 *.so
 *.dylib
-multihop
+/multihop
 
 # Test and coverage artifacts
 *.test
@@ -21,8 +21,6 @@ coverage.html
 
 # Node & Frontend
 node_modules/
-dist/
-web/dist/
 .vite/
 *.log
 
