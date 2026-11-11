@@ -45,6 +45,12 @@ func main() {
 		cmdExport(os.Args[2:])
 	case "benchmark":
 		cmdBenchmark(os.Args[2:])
+	case "duplicates":
+		cmdDuplicates(os.Args[2:])
+	case "merge":
+		cmdMerge(os.Args[2:])
+	case "communities":
+		cmdCommunities(os.Args[2:])
 	case "serve":
 		cmdServe(os.Args[2:])
 	case "version", "--version", "-v":
@@ -70,8 +76,11 @@ Commands:
   inspect    Inspect an entity, its neighbors, and degree centrality
   cypher     Execute a Cypher-Lite graph query against SQLite
   export     Export knowledge graph to GraphML or Cytoscape JSON
-  benchmark  Run comparative benchmark between Naive Vector RAG and MultiHop
-  serve      Launch the HTTP REST/SSE API and embedded React 19 Web Studio
+  benchmark    Run comparative benchmark between Naive Vector RAG and MultiHop
+  duplicates   List candidate duplicate entities for disambiguation
+  merge        Merge duplicate entities into a canonical node
+  communities  List detected LPA community clusters and summaries
+  serve        Launch the HTTP REST/SSE API and embedded React 19 Web Studio
   version    Show version information
 
 Run 'multihop <command> --help' for details on each command.
@@ -275,6 +284,8 @@ func cmdQuery(args []string) {
 	model := fs.String("model", "", "Model name")
 	apiKey := fs.String("api-key", os.Getenv("OPENAI_API_KEY"), "API key")
 	endpoint := fs.String("endpoint", "", "API endpoint")
+	mode := fs.String("mode", "auto", "Query mode (auto, local, global)")
+	asOf := fs.String("as-of", "", "Temporal cutoff date (YYYY-MM-DD)")
 	maxHops := fs.Int("max-hops", 3, "Max graph traversal hops")
 	topK := fs.Int("top-k", 5, "Number of chunks to retrieve")
 	fs.Parse(args[1:])
@@ -294,6 +305,8 @@ func cmdQuery(args []string) {
 
 	req := agent.QueryRequest{
 		Query:   queryText,
+		Mode:    *mode,
+		AsOf:    *asOf,
 		MaxHops: *maxHops,
 		TopK:    *topK,
 	}
@@ -347,7 +360,9 @@ func cmdQuery(args []string) {
 		}
 	}
 
-	fmt.Printf("\nCompleted in %d ms (Hallucination risk: %.2f)\n\n", resp.ExecutionTimeMs, resp.HallucinationRisk)
+	fmt.Printf("\nCompleted in %d ms (Mode: %s)\n", resp.ExecutionTimeMs, resp.Mode)
+	fmt.Printf("RAG Triad: Context Relevance: %.2f | Groundedness: %.2f | Answer Relevance: %.2f\n\n",
+		resp.ContextRelevance, resp.Groundedness, resp.AnswerRelevance)
 }
 
 func cmdPath(args []string) {
@@ -587,6 +602,103 @@ func cmdBenchmark(args []string) {
 	}
 
 	fmt.Println("\nBenchmark summary: MultiHop traverses N-degree relational chains while retaining under 30MB RAM footprint.")
+}
+
+func cmdDuplicates(args []string) {
+	fs := flag.NewFlagSet("duplicates", flag.ExitOnError)
+	dbPath := fs.String("db", "knowledge.db", "Path to SQLite database file")
+	maxDist := fs.Int("distance", 2, "Max Levenshtein distance for duplicate detection")
+	fs.Parse(args)
+
+	store, err := graph.OpenStore(*dbPath)
+	if err != nil {
+		fmt.Printf("Error opening database: %v\n", err)
+		os.Exit(1)
+	}
+	defer store.Close()
+
+	candidates, err := store.FindDuplicateCandidates(*maxDist)
+	if err != nil {
+		fmt.Printf("Error finding duplicates: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("\nCandidate Duplicate Entities Found: %d\n\n", len(candidates))
+	for i, c := range candidates {
+		fmt.Printf("Candidate #%d (Similarity: %.2f | %s):\n", i+1, c.Similarity, c.Reason)
+		fmt.Printf("  - Canonical Candidate: [%s] \"%s\" (%s, %d mentions)\n", c.NodeA.ID, c.NodeA.Name, c.NodeA.EntityType, c.NodeA.MentionCount)
+		fmt.Printf("  - Duplicate Variant:   [%s] \"%s\" (%s, %d mentions)\n", c.NodeB.ID, c.NodeB.Name, c.NodeB.EntityType, c.NodeB.MentionCount)
+		fmt.Printf("  - Action: multihop merge --canonical %s --duplicate %s\n\n", c.NodeA.ID, c.NodeB.ID)
+	}
+}
+
+func cmdMerge(args []string) {
+	fs := flag.NewFlagSet("merge", flag.ExitOnError)
+	canonical := fs.String("canonical", "", "Canonical node ID to retain")
+	duplicate := fs.String("duplicate", "", "Comma-separated duplicate node IDs to merge and delete")
+	dbPath := fs.String("db", "knowledge.db", "Path to SQLite database file")
+	fs.Parse(args)
+
+	if *canonical == "" || *duplicate == "" {
+		fmt.Println("Error: both --canonical and --duplicate must be specified")
+		fs.Usage()
+		os.Exit(1)
+	}
+
+	store, err := graph.OpenStore(*dbPath)
+	if err != nil {
+		fmt.Printf("Error opening database: %v\n", err)
+		os.Exit(1)
+	}
+	defer store.Close()
+
+	dupIDs := strings.Split(*duplicate, ",")
+	for i := range dupIDs {
+		dupIDs[i] = strings.TrimSpace(dupIDs[i])
+	}
+
+	if err := store.MergeNodes(*canonical, dupIDs); err != nil {
+		fmt.Printf("Error merging nodes: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("[MultiHop] Successfully merged %d duplicate entities into canonical node '%s'.\n", len(dupIDs), *canonical)
+}
+
+func cmdCommunities(args []string) {
+	fs := flag.NewFlagSet("communities", flag.ExitOnError)
+	dbPath := fs.String("db", "knowledge.db", "Path to SQLite database file")
+	regenerate := fs.Bool("regenerate", false, "Re-run LPA community detection before listing")
+	fs.Parse(args)
+
+	store, err := graph.OpenStore(*dbPath)
+	if err != nil {
+		fmt.Printf("Error opening database: %v\n", err)
+		os.Exit(1)
+	}
+	defer store.Close()
+
+	if *regenerate {
+		fmt.Println("[MultiHop] Running Label Propagation Algorithm (LPA) clustering...")
+		store.DetectCommunitiesLabelPropagation(10)
+	}
+
+	comms, err := store.ListCommunities()
+	if err != nil {
+		fmt.Printf("Error listing communities: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(comms) == 0 {
+		fmt.Println("No communities generated yet. Run 'multihop communities --regenerate'.")
+		return
+	}
+
+	fmt.Printf("\nDetected Topical Communities (%d total):\n\n", len(comms))
+	for _, c := range comms {
+		fmt.Printf("Cluster #%d: %s (%d entities)\n", c.ID, c.Title, c.NodeCount)
+		fmt.Printf("  Summary: %s\n\n", c.Summary)
+	}
 }
 
 func cmdServe(args []string) {

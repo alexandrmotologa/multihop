@@ -141,3 +141,47 @@ func TestStoreCRUDAndNeighbors(t *testing.T) {
 		t.Fatalf("expected 1 cypher match, got %d", len(rows))
 	}
 }
+
+func TestDuplicateCandidatesAndMerge(t *testing.T) {
+	store := setupTestStore(t)
+
+	n1 := &Node{ID: "acme_corporation", Name: "Acme Corporation", EntityType: "ORGANIZATION", MentionCount: 3}
+	n2 := &Node{ID: "acme_corp", Name: "Acme Corp", EntityType: "ORGANIZATION", MentionCount: 2}
+	store.UpsertNode(n1)
+	store.UpsertNode(n2)
+
+	target := &Node{ID: "supplier_x", Name: "Supplier X", EntityType: "ORGANIZATION", MentionCount: 1}
+	store.UpsertNode(target)
+
+	store.UpsertEdge(&Edge{
+		ID:           "e_old",
+		SourceNodeID: "acme_corp",
+		TargetNodeID: "supplier_x",
+		RelationType: "CONTRACTS_WITH",
+		Weight:       1.0,
+	})
+
+	candidates, err := store.FindDuplicateCandidates(2)
+	if err != nil {
+		t.Fatalf("find duplicates error: %v", err)
+	}
+	if len(candidates) == 0 {
+		t.Fatalf("expected duplicate candidate between Acme Corporation and Acme Corp")
+	}
+
+	// Merge acme_corp into acme_corporation
+	if err := store.MergeNodes("acme_corporation", []string{"acme_corp"}); err != nil {
+		t.Fatalf("merge nodes error: %v", err)
+	}
+
+	// Verify acme_corp deleted
+	if _, err := store.GetNode("acme_corp"); err == nil {
+		t.Errorf("expected acme_corp to be deleted after merge")
+	}
+
+	// Verify alias created
+	mergedNode, err := store.FindNodeByNameOrAlias("Acme Corp")
+	if err != nil || mergedNode.ID != "acme_corporation" {
+		t.Errorf("expected alias lookup for 'Acme Corp' to resolve to 'acme_corporation'")
+	}
+}

@@ -119,13 +119,32 @@ Open `http://localhost:8080` in your browser.
 | :--- | :--- |
 | `multihop init` | Initializes a new SQLite database with schema and indices |
 | `multihop index` | Parses documents, extracts entities/relations, computes vectors, and indexes |
-| `multihop query` | Runs an agentic multi-hop query with ASCII reasoning tree and citations |
+| `multihop query` | Runs an agentic multi-hop query with ASCII reasoning tree and citations (`--mode`, `--as-of`) |
 | `multihop path` | Computes the shortest reasoning path between two entities using Dijkstra |
 | `multihop inspect` | Inspects an entity, its neighbors, aliases, and degree centrality |
 | `multihop cypher` | Executes a Cypher-Lite graph pattern query against SQLite |
 | `multihop export` | Exports graph data to GraphML or Cytoscape JSON |
+| `multihop duplicates` | Detects candidate duplicate entities for disambiguation |
+| `multihop merge` | Merges duplicate entities into a canonical node, remapping edges |
+| `multihop communities` | Generates and lists Label Propagation Algorithm (LPA) communities and summaries |
 | `multihop benchmark` | Runs comparative evaluation between Naive Vector RAG and MultiHop |
 | `multihop serve` | Starts the HTTP API and embedded React 19 Web Studio |
+
+## Key Capabilities
+
+### 1. Dual-Mode Search
+- Local Multi-Hop: Traverses fine-grained entity chains up to N hops using bounded beam search.
+- Global Community Search: Summarizes entire graph clusters generated via the Label Propagation Algorithm (LPA).
+- Hybrid Auto-Routing: Classifies incoming queries and selects the optimal traversal strategy.
+
+### 2. Temporal 4D Graph Traversal
+Edges maintain `valid_from` and `valid_to` bounds. Queries support `--as-of YYYY-MM-DD` to evaluate corporate and legal relationships at any historical point in time.
+
+### 3. Entity Disambiguation and Resolution
+Normalized edit distance and acronym matching identify duplicate nodes across documents. The `merge` engine transactionally rewrites inbound and outbound edges while registering alias tables.
+
+### 4. Interactive Reasoning Path Player
+The React 19 studio includes a step-by-step player with auto-panning camera, active hop highlighting, and real-time RAG Triad scores (Context Relevance, Groundedness, Answer Relevance).
 
 ## Configuration
 

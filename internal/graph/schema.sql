@@ -58,6 +58,17 @@ CREATE TABLE IF NOT EXISTS edges (
     relation_type TEXT NOT NULL,
     weight REAL DEFAULT 1.0,
     evidence_chunk_id TEXT REFERENCES chunks(id) ON DELETE SET NULL,
+    valid_from TEXT,
+    valid_to TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Community Clusters and Summaries
+CREATE TABLE IF NOT EXISTS communities (
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    node_count INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

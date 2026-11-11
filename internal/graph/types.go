@@ -23,7 +23,26 @@ type Edge struct {
 	RelationType    string    `json:"relation_type"`
 	Weight          float64   `json:"weight"`
 	EvidenceChunkID string    `json:"evidence_chunk_id,omitempty"`
+	ValidFrom       string    `json:"valid_from,omitempty"`
+	ValidTo         string    `json:"valid_to,omitempty"`
 	CreatedAt       time.Time `json:"created_at"`
+}
+
+// Community represents an entity cluster with a high-level summary.
+type Community struct {
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	Summary   string    `json:"summary"`
+	NodeCount int       `json:"node_count"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// DuplicateCandidate represents two nodes that may represent the same entity.
+type DuplicateCandidate struct {
+	NodeA      *Node `json:"node_a"`
+	NodeB      *Node `json:"node_b"`
+	Similarity float64 `json:"similarity"`
+	Reason     string  `json:"reason"`
 }
 
 // NodeAlias maps colloquial variations to the canonical node.

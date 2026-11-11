@@ -271,6 +271,30 @@ where $k_{rrf} = 60$, $w_{vec} = 1.0$, $w_{bm25} = 0.8$, and $w_{graph} = 1.2$.
   - Subtask 8.2.3: Build streaming chat interface with interactive citation drawer displaying raw chunk text.
   - Subtask 8.2.4: Build live benchmark dashboard visualizing Naive RAG vs MultiHop performance.
 
+### Milestone 9: Advanced GraphRAG Capabilities (Completed)
+- Task 9.1: Dual-Mode Search (Local Multi-Hop vs Global Community Search).
+  - Subtask 9.1.1: Implement automatic query routing detecting broad thematic vs entity-specific queries.
+  - Subtask 9.1.2: Implement hierarchical community summary generation via Label Propagation Algorithm (LPA).
+  - Subtask 9.1.3: Add CLI `--mode global` and API `mode` parameter.
+- Task 9.2: Temporal 4D Knowledge Graph Traversal.
+  - Subtask 9.2.1: Extend graph schema with `valid_from` and `valid_to` edge timestamp bounds.
+  - Subtask 9.2.2: Implement point-in-time traversal filters with `--as-of` flag.
+  - Subtask 9.2.3: Add temporal date picker in React 19 Studio.
+- Task 9.3: Cypher-Lite Interactive Query Playground.
+  - Subtask 9.3.1: Implement Cypher-Lite recursive CTE parser and executor in Go backend.
+  - Subtask 9.3.2: Build dedicated `CypherConsole` component with query presets and JSON record viewer.
+- Task 9.4: Entity Disambiguation and Deduplication.
+  - Subtask 9.4.1: Implement candidate duplicate detector based on Levenshtein distance and alias expansion.
+  - Subtask 9.4.2: Implement transactional node merger remapping edges and preserving historical aliases.
+  - Subtask 9.4.3: Build `DeduplicationPanel` with one-click entity merging in web studio.
+- Task 9.5: Reasoning Path Player & Visual Diagnostics.
+  - Subtask 9.5.1: Build step-by-step playback controls (Play, Pause, Step Next, Step Prev, Reset).
+  - Subtask 9.5.2: Implement glowing laser pulse animation and auto-panning camera on active hops in `GraphCanvas`.
+  - Subtask 9.5.3: Compute and display real-time RAG Triad scores (Context Relevance, Groundedness, Answer Relevance).
+- Task 9.6: Drag-and-Drop Document Ingestion in UI.
+  - Subtask 9.6.1: Build `DocumentUploadModal` with drag-and-drop file upload and real-time extraction progress.
+  - Subtask 9.6.2: Implement `/api/documents/upload` endpoint with on-the-fly chunking, embedding, and entity extraction.
+
 ---
 
 ## 6. Verification and Acceptance Criteria

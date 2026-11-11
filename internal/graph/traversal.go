@@ -6,6 +6,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 )
 
 // TraversalOptions configures the graph traversal limits and scoring.
@@ -13,6 +14,7 @@ type TraversalOptions struct {
 	MaxHops   int     // Maximum depth (default 3)
 	BeamWidth int     // Max paths kept at each frontier step (default 5)
 	MinScore  float64 // Minimum path score threshold
+	AsOf      string  // Optional temporal cutoff date (YYYY-MM-DD)
 }
 
 // DefaultTraversalOptions provides balanced traversal limits.
@@ -77,6 +79,16 @@ func (s *Store) BoundedBeamSearch(seedIDs []string, query string, opts Traversal
 				// Avoid cycles
 				if p.visited[n.Neighbor.ID] {
 					continue
+				}
+
+				// Temporal validity check
+				if opts.AsOf != "" {
+					if n.Edge.ValidFrom != "" && opts.AsOf < n.Edge.ValidFrom {
+						continue
+					}
+					if n.Edge.ValidTo != "" && opts.AsOf > n.Edge.ValidTo {
+						continue
+					}
 				}
 
 				// Copy visited set
@@ -393,6 +405,35 @@ func (s *Store) DetectCommunitiesLabelPropagation(maxIterations int) (map[int][]
 		cID := labels[n.ID]
 		n.CommunityID = cID
 		communities[cID] = append(communities[cID], n)
+	}
+
+	// Generate and persist community summaries
+	for cID, cNodes := range communities {
+		if len(cNodes) == 0 {
+			continue
+		}
+		var names []string
+		for _, cn := range cNodes {
+			names = append(names, cn.Name)
+		}
+		maxShown := 4
+		if len(names) < maxShown {
+			maxShown = len(names)
+		}
+		title := fmt.Sprintf("Cluster #%d: %s", cID, cNodes[0].Name)
+		if len(cNodes) > 1 {
+			title = fmt.Sprintf("%s and %d related entities", cNodes[0].Name, len(cNodes)-1)
+		}
+		summary := fmt.Sprintf("Topical cluster of %d entities (%s) centered around %s.",
+			len(cNodes), strings.Join(names[:maxShown], ", "), cNodes[0].Name)
+
+		s.UpsertCommunity(&Community{
+			ID:        cID,
+			Title:     title,
+			Summary:   summary,
+			NodeCount: len(cNodes),
+			CreatedAt: time.Now().UTC(),
+		})
 	}
 
 	return communities, nil

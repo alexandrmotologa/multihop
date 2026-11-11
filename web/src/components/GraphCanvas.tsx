@@ -21,11 +21,23 @@ export interface GraphLink {
   weight: number;
 }
 
+export interface ActiveHopInfo {
+  step: number;
+  sourceId: string;
+  sourceName: string;
+  targetId: string;
+  targetName: string;
+  relationType: string;
+  score?: number;
+  evidenceText?: string;
+}
+
 interface GraphCanvasProps {
   nodes: GraphNode[];
   links: GraphLink[];
   highlightPathNodeIds?: string[];
   highlightEdgeIds?: string[];
+  activeHop?: ActiveHopInfo | null;
   onSelectNode?: (node: GraphNode | null) => void;
   selectedNodeId?: string | null;
 }
@@ -45,6 +57,7 @@ export default function GraphCanvas({
   links: initialLinks,
   highlightPathNodeIds = [],
   highlightEdgeIds = [],
+  activeHop,
   onSelectNode,
   selectedNodeId,
 }: GraphCanvasProps) {
@@ -200,19 +213,38 @@ export default function GraphCanvas({
     const pathSet = new Set(highlightPathNodeIds);
     const edgeSet = new Set(highlightEdgeIds);
 
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 150);
+
+    const isActiveHopLink = (srcId: string, tgtId: string) => {
+      if (!activeHop) return false;
+      return (activeHop.sourceId === srcId && activeHop.targetId === tgtId) ||
+             (activeHop.sourceId === tgtId && activeHop.targetId === srcId);
+    };
+
+    const isActiveHopNode = (nodeId: string) => {
+      if (!activeHop) return false;
+      return activeHop.sourceId === nodeId || activeHop.targetId === nodeId;
+    };
+
     // 1. Draw Links
     for (const link of simLinks) {
       const src = nodeMap.get(link.source);
       const tgt = nodeMap.get(link.target);
       if (!src || !tgt || src.x === undefined || tgt.x === undefined) continue;
 
-      const isHighlighted = edgeSet.has(link.id) || (pathSet.has(src.id) && pathSet.has(tgt.id));
+      const isHopActive = isActiveHopLink(link.source, link.target);
+      const isHighlighted = isHopActive || edgeSet.has(link.id) || (pathSet.has(src.id) && pathSet.has(tgt.id));
 
       ctx.beginPath();
       ctx.moveTo(src.x, src.y!);
       ctx.lineTo(tgt.x, tgt.y!);
 
-      if (isHighlighted) {
+      if (isHopActive) {
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4 + pulse * 2;
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 12 + pulse * 6;
+      } else if (isHighlighted) {
         ctx.strokeStyle = '#06b6d4';
         ctx.lineWidth = 2.5;
         ctx.shadowColor = '#06b6d4';
@@ -228,8 +260,8 @@ export default function GraphCanvas({
       // Draw relation label on edge
       const midX = (src.x + tgt.x) / 2;
       const midY = (src.y! + tgt.y!) / 2;
-      ctx.font = '9px monospace';
-      ctx.fillStyle = isHighlighted ? '#38bdf8' : 'rgba(148, 163, 184, 0.6)';
+      ctx.font = isHopActive ? 'bold 10px monospace' : '9px monospace';
+      ctx.fillStyle = isHopActive ? '#fbbf24' : isHighlighted ? '#38bdf8' : 'rgba(148, 163, 184, 0.6)';
       ctx.textAlign = 'center';
       ctx.fillText(link.relation_type, midX, midY - 4);
     }
@@ -238,13 +270,22 @@ export default function GraphCanvas({
     for (const node of simNodes) {
       if (node.x === undefined || node.y === undefined) continue;
 
+      const isHopNode = isActiveHopNode(node.id);
       const isSelected = selectedNodeId === node.id;
       const isPathNode = pathSet.has(node.id);
       const color = TYPE_COLORS[node.entity_type] || TYPE_COLORS.DEFAULT;
       const radius = Math.max(10, Math.min(22, 10 + (node.mention_count || 1) * 2));
 
       // Glow circle
-      if (isSelected || isPathNode) {
+      if (isHopNode) {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius + 8 + pulse * 4, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
+        ctx.fill();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else if (isSelected || isPathNode) {
         ctx.beginPath();
         ctx.arc(node.x, node.y, radius + 6, 0, 2 * Math.PI);
         ctx.fillStyle = isSelected ? 'rgba(59, 130, 246, 0.3)' : 'rgba(6, 182, 212, 0.3)';
@@ -256,24 +297,53 @@ export default function GraphCanvas({
       ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
       ctx.fillStyle = color;
       ctx.fill();
-      ctx.strokeStyle = isSelected ? '#ffffff' : '#0f172a';
-      ctx.lineWidth = isSelected ? 2.5 : 1.5;
+      ctx.strokeStyle = isHopNode ? '#f59e0b' : isSelected ? '#ffffff' : '#0f172a';
+      ctx.lineWidth = isHopNode ? 3 : isSelected ? 2.5 : 1.5;
       ctx.stroke();
 
       // Node Label
-      ctx.font = `${isSelected || isPathNode ? 'bold ' : ''}11px Plus Jakarta Sans, system-ui`;
-      ctx.fillStyle = isSelected || isPathNode ? '#ffffff' : '#cbd5e1';
+      ctx.font = `${isHopNode || isSelected || isPathNode ? 'bold ' : ''}11px Plus Jakarta Sans, system-ui`;
+      ctx.fillStyle = isHopNode ? '#fef08a' : isSelected || isPathNode ? '#ffffff' : '#cbd5e1';
       ctx.textAlign = 'center';
       ctx.fillText(node.name, node.x, node.y + radius + 14);
 
       // Type Badge
       ctx.font = '8px monospace';
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
+      ctx.fillStyle = isHopNode ? '#fde047' : 'rgba(148, 163, 184, 0.8)';
       ctx.fillText(node.entity_type, node.x, node.y + radius + 24);
     }
 
     ctx.restore();
-  }, [simNodes, simLinks, highlightPathNodeIds, highlightEdgeIds, selectedNodeId]);
+  }, [simNodes, simLinks, highlightPathNodeIds, highlightEdgeIds, selectedNodeId, activeHop]);
+
+  // Auto-center camera when activeHop changes
+  useEffect(() => {
+    if (!activeHop || !simNodes.length) return;
+    const src = simNodes.find(n => n.id === activeHop.sourceId || n.name.toLowerCase() === activeHop.sourceName.toLowerCase());
+    const tgt = simNodes.find(n => n.id === activeHop.targetId || n.name.toLowerCase() === activeHop.targetName.toLowerCase());
+    if (!src || !tgt || src.x === undefined || tgt.x === undefined) return;
+
+    const width = containerRef.current?.clientWidth || 800;
+    const height = containerRef.current?.clientHeight || 600;
+    const midX = (src.x + tgt.x) / 2;
+    const midY = ((src.y || 0) + (tgt.y || 0)) / 2;
+
+    transformRef.current.x = width / 2 - midX * transformRef.current.k;
+    transformRef.current.y = height / 2 - midY * transformRef.current.k;
+    draw();
+  }, [activeHop, simNodes, draw]);
+
+  // Pulse animation loop when activeHop is active
+  useEffect(() => {
+    if (!activeHop) return;
+    let animId: number;
+    const loop = () => {
+      draw();
+      animId = requestAnimationFrame(loop);
+    };
+    animId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animId);
+  }, [activeHop, draw]);
 
   // Handle Resize
   useEffect(() => {
@@ -383,6 +453,32 @@ export default function GraphCanvas({
         onWheel={handleWheel}
         className="w-full h-full cursor-grab active:cursor-grabbing"
       />
+
+      {/* Active Hop Overlay */}
+      {activeHop && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md border border-amber-500/50 rounded-xl px-4 py-2.5 flex items-center gap-3 text-xs shadow-2xl shadow-amber-950/40 z-20 pointer-events-none animate-in fade-in">
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+          <span className="font-mono text-amber-400 font-bold uppercase tracking-wider text-[11px]">
+            Hop #{activeHop.step}
+          </span>
+          <div className="flex items-center gap-1.5 font-medium">
+            <span className="text-white px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/40">
+              {activeHop.sourceName}
+            </span>
+            <span className="text-[10px] font-mono text-amber-300">
+              --[{activeHop.relationType}]--&gt;
+            </span>
+            <span className="text-white px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/40">
+              {activeHop.targetName}
+            </span>
+          </div>
+          {activeHop.evidenceText && (
+            <span className="text-slate-400 text-[11px] max-w-sm truncate border-l border-slate-700 pl-2.5 italic">
+              "{activeHop.evidenceText}"
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Legend */}
       <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur border border-slate-800/80 rounded-lg p-2.5 flex items-center gap-3 text-[11px] text-slate-300">

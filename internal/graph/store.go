@@ -442,11 +442,13 @@ func (s *Store) UpsertEdge(edge *Edge) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	query := `INSERT INTO edges (id, source_node_id, target_node_id, relation_type, weight, evidence_chunk_id, created_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?)
+	query := `INSERT INTO edges (id, source_node_id, target_node_id, relation_type, weight, evidence_chunk_id, valid_from, valid_to, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(id) DO UPDATE SET
                 weight = excluded.weight,
-                evidence_chunk_id = COALESCE(excluded.evidence_chunk_id, edges.evidence_chunk_id)`
+                evidence_chunk_id = COALESCE(excluded.evidence_chunk_id, edges.evidence_chunk_id),
+                valid_from = COALESCE(excluded.valid_from, edges.valid_from),
+                valid_to = COALESCE(excluded.valid_to, edges.valid_to)`
 
 	var evidence sql.NullString
 	if edge.EvidenceChunkID != "" {
@@ -454,7 +456,17 @@ func (s *Store) UpsertEdge(edge *Edge) error {
 		evidence.Valid = true
 	}
 
-	_, err := s.db.Exec(query, edge.ID, edge.SourceNodeID, edge.TargetNodeID, edge.RelationType, edge.Weight, evidence, edge.CreatedAt)
+	var vFrom, vTo sql.NullString
+	if edge.ValidFrom != "" {
+		vFrom.String = edge.ValidFrom
+		vFrom.Valid = true
+	}
+	if edge.ValidTo != "" {
+		vTo.String = edge.ValidTo
+		vTo.Valid = true
+	}
+
+	_, err := s.db.Exec(query, edge.ID, edge.SourceNodeID, edge.TargetNodeID, edge.RelationType, edge.Weight, evidence, vFrom, vTo, edge.CreatedAt)
 	return err
 }
 
@@ -464,7 +476,7 @@ func (s *Store) GetNeighbors(nodeID string) ([]NeighborEdge, error) {
 	defer s.mu.RUnlock()
 
 	// Outgoing
-	queryOut := `SELECT e.id, e.source_node_id, e.target_node_id, e.relation_type, e.weight, e.evidence_chunk_id, e.created_at,
+	queryOut := `SELECT e.id, e.source_node_id, e.target_node_id, e.relation_type, e.weight, e.evidence_chunk_id, e.valid_from, e.valid_to, e.created_at,
                         n.id, n.name, n.entity_type, n.description, n.mention_count, n.community_id, n.created_at
                  FROM edges e
                  JOIN nodes n ON e.target_node_id = n.id
@@ -480,16 +492,22 @@ func (s *Store) GetNeighbors(nodeID string) ([]NeighborEdge, error) {
 	for rowsOut.Next() {
 		var e Edge
 		var n Node
-		var evChunk sql.NullString
+		var evChunk, vFrom, vTo sql.NullString
 		var eCreated, nCreated string
 		var nDesc sql.NullString
 
-		if err := rowsOut.Scan(&e.ID, &e.SourceNodeID, &e.TargetNodeID, &e.RelationType, &e.Weight, &evChunk, &eCreated,
+		if err := rowsOut.Scan(&e.ID, &e.SourceNodeID, &e.TargetNodeID, &e.RelationType, &e.Weight, &evChunk, &vFrom, &vTo, &eCreated,
 			&n.ID, &n.Name, &n.EntityType, &nDesc, &n.MentionCount, &n.CommunityID, &nCreated); err != nil {
 			continue
 		}
 		if evChunk.Valid {
 			e.EvidenceChunkID = evChunk.String
+		}
+		if vFrom.Valid {
+			e.ValidFrom = vFrom.String
+		}
+		if vTo.Valid {
+			e.ValidTo = vTo.String
 		}
 		if nDesc.Valid {
 			n.Description = nDesc.String
@@ -502,7 +520,7 @@ func (s *Store) GetNeighbors(nodeID string) ([]NeighborEdge, error) {
 	}
 
 	// Incoming
-	queryIn := `SELECT e.id, e.source_node_id, e.target_node_id, e.relation_type, e.weight, e.evidence_chunk_id, e.created_at,
+	queryIn := `SELECT e.id, e.source_node_id, e.target_node_id, e.relation_type, e.weight, e.evidence_chunk_id, e.valid_from, e.valid_to, e.created_at,
                        n.id, n.name, n.entity_type, n.description, n.mention_count, n.community_id, n.created_at
                 FROM edges e
                 JOIN nodes n ON e.source_node_id = n.id
@@ -517,16 +535,22 @@ func (s *Store) GetNeighbors(nodeID string) ([]NeighborEdge, error) {
 	for rowsIn.Next() {
 		var e Edge
 		var n Node
-		var evChunk sql.NullString
+		var evChunk, vFrom, vTo sql.NullString
 		var eCreated, nCreated string
 		var nDesc sql.NullString
 
-		if err := rowsIn.Scan(&e.ID, &e.SourceNodeID, &e.TargetNodeID, &e.RelationType, &e.Weight, &evChunk, &eCreated,
+		if err := rowsIn.Scan(&e.ID, &e.SourceNodeID, &e.TargetNodeID, &e.RelationType, &e.Weight, &evChunk, &vFrom, &vTo, &eCreated,
 			&n.ID, &n.Name, &n.EntityType, &nDesc, &n.MentionCount, &n.CommunityID, &nCreated); err != nil {
 			continue
 		}
 		if evChunk.Valid {
 			e.EvidenceChunkID = evChunk.String
+		}
+		if vFrom.Valid {
+			e.ValidFrom = vFrom.String
+		}
+		if vTo.Valid {
+			e.ValidTo = vTo.String
 		}
 		if nDesc.Valid {
 			n.Description = nDesc.String
@@ -581,7 +605,7 @@ func (s *Store) GetGraphSnapshot(limit int) (*GraphSnapshot, error) {
 		}
 	}
 
-	rowsE, err := s.db.Query(`SELECT id, source_node_id, target_node_id, relation_type, weight, evidence_chunk_id, created_at FROM edges LIMIT ?`, limit*3)
+	rowsE, err := s.db.Query(`SELECT id, source_node_id, target_node_id, relation_type, weight, evidence_chunk_id, valid_from, valid_to, created_at FROM edges LIMIT ?`, limit*3)
 	if err != nil {
 		return nil, err
 	}
@@ -590,11 +614,17 @@ func (s *Store) GetGraphSnapshot(limit int) (*GraphSnapshot, error) {
 	links := make([]*Edge, 0)
 	for rowsE.Next() {
 		var e Edge
-		var evChunk sql.NullString
+		var evChunk, vFrom, vTo sql.NullString
 		var createdStr string
-		if err := rowsE.Scan(&e.ID, &e.SourceNodeID, &e.TargetNodeID, &e.RelationType, &e.Weight, &evChunk, &createdStr); err == nil {
+		if err := rowsE.Scan(&e.ID, &e.SourceNodeID, &e.TargetNodeID, &e.RelationType, &e.Weight, &evChunk, &vFrom, &vTo, &createdStr); err == nil {
 			if evChunk.Valid {
 				e.EvidenceChunkID = evChunk.String
+			}
+			if vFrom.Valid {
+				e.ValidFrom = vFrom.String
+			}
+			if vTo.Valid {
+				e.ValidTo = vTo.String
 			}
 			// Only include link if both nodes are present in the snapshot
 			if nodeMap[e.SourceNodeID] && nodeMap[e.TargetNodeID] {
@@ -607,6 +637,182 @@ func (s *Store) GetGraphSnapshot(limit int) (*GraphSnapshot, error) {
 		Nodes: nodes,
 		Links: links,
 	}, nil
+}
+
+// UpsertCommunity stores or updates a community summary.
+func (s *Store) UpsertCommunity(comm *Community) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	query := `INSERT INTO communities (id, title, summary, node_count, created_at)
+              VALUES (?, ?, ?, ?, ?)
+              ON CONFLICT(id) DO UPDATE SET
+                title = excluded.title,
+                summary = excluded.summary,
+                node_count = excluded.node_count`
+	_, err := s.db.Exec(query, comm.ID, comm.Title, comm.Summary, comm.NodeCount, comm.CreatedAt)
+	return err
+}
+
+// ListCommunities returns all detected communities with their generated summaries.
+func (s *Store) ListCommunities() ([]*Community, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	rows, err := s.db.Query(`SELECT id, title, summary, node_count, created_at FROM communities ORDER BY node_count DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comms []*Community
+	for rows.Next() {
+		var c Community
+		var createdStr string
+		if err := rows.Scan(&c.ID, &c.Title, &c.Summary, &c.NodeCount, &createdStr); err == nil {
+			c.CreatedAt, _ = time.Parse(time.RFC3339, createdStr)
+			comms = append(comms, &c)
+		}
+	}
+	return comms, nil
+}
+
+// FindDuplicateCandidates identifies nodes with identical or very close names that may represent the same real-world entity.
+func (s *Store) FindDuplicateCandidates(maxDistance int) ([]DuplicateCandidate, error) {
+	nodes, err := s.ListNodes(500, "")
+	if err != nil {
+		return nil, err
+	}
+
+	if maxDistance <= 0 {
+		maxDistance = 2
+	}
+
+	var candidates []DuplicateCandidate
+	for i := 0; i < len(nodes); i++ {
+		for j := i + 1; j < len(nodes); j++ {
+			nA := nodes[i]
+			nB := nodes[j]
+
+			// Only compare entities of similar category
+			if nA.EntityType != nB.EntityType && nA.EntityType != "DEFAULT" && nB.EntityType != "DEFAULT" {
+				continue
+			}
+
+			sA := strings.ToLower(strings.TrimSpace(nA.Name))
+			sB := strings.ToLower(strings.TrimSpace(nB.Name))
+
+			// Substring containment or short edit distance
+			if sA == sB || (len(sA) > 4 && len(sB) > 4 && (strings.Contains(sA, sB) || strings.Contains(sB, sA))) {
+				candidates = append(candidates, DuplicateCandidate{
+					NodeA:      nA,
+					NodeB:      nB,
+					Similarity: 0.95,
+					Reason:     "Substring containment / name variant",
+				})
+			} else if dist := calcLevenshtein(sA, sB); dist <= maxDistance && len(sA) > 3 && len(sB) > 3 {
+				sim := 1.0 - (float64(dist) / float64(max(len(sA), len(sB))))
+				candidates = append(candidates, DuplicateCandidate{
+					NodeA:      nA,
+					NodeB:      nB,
+					Similarity: sim,
+					Reason:     fmt.Sprintf("Levenshtein distance %d", dist),
+				})
+			}
+		}
+	}
+
+	return candidates, nil
+}
+
+// MergeNodes combines duplicate entities into a canonical node, updating all edge relationships and adding aliases.
+func (s *Store) MergeNodes(canonicalID string, duplicateIDs []string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Ensure canonical node exists
+	var canonName string
+	var canonMentions int
+	if err := tx.QueryRow(`SELECT name, mention_count FROM nodes WHERE id = ?`, canonicalID).Scan(&canonName, &canonMentions); err != nil {
+		return fmt.Errorf("canonical node '%s' not found: %w", canonicalID, err)
+	}
+
+	totalAddedMentions := 0
+
+	for _, dupID := range duplicateIDs {
+		if dupID == canonicalID {
+			continue
+		}
+
+		var dupName string
+		var dupMentions int
+		err := tx.QueryRow(`SELECT name, mention_count FROM nodes WHERE id = ?`, dupID).Scan(&dupName, &dupMentions)
+		if err == nil {
+			totalAddedMentions += dupMentions
+			// Add aliases for the duplicate
+			tx.Exec(`INSERT INTO node_aliases (alias, canonical_node_id) VALUES (?, ?) ON CONFLICT(alias) DO NOTHING`, strings.ToLower(dupID), canonicalID)
+			tx.Exec(`INSERT INTO node_aliases (alias, canonical_node_id) VALUES (?, ?) ON CONFLICT(alias) DO NOTHING`, strings.ToLower(dupName), canonicalID)
+		}
+
+		// Re-point outgoing edges
+		tx.Exec(`UPDATE OR IGNORE edges SET source_node_id = ? WHERE source_node_id = ?`, canonicalID, dupID)
+		// Re-point incoming edges
+		tx.Exec(`UPDATE OR IGNORE edges SET target_node_id = ? WHERE target_node_id = ?`, canonicalID, dupID)
+
+		// Delete remaining dangling duplicate edges and the node itself
+		tx.Exec(`DELETE FROM edges WHERE source_node_id = ? OR target_node_id = ?`, dupID, dupID)
+		tx.Exec(`DELETE FROM nodes WHERE id = ?`, dupID)
+	}
+
+	// Update canonical node mention count
+	tx.Exec(`UPDATE nodes SET mention_count = mention_count + ? WHERE id = ?`, totalAddedMentions, canonicalID)
+
+	return tx.Commit()
+}
+
+func calcLevenshtein(s1, s2 string) int {
+	r1, r2 := []rune(s1), []rune(s2)
+	n, m := len(r1), len(r2)
+	if n == 0 {
+		return m
+	}
+	if m == 0 {
+		return n
+	}
+	dp := make([][]int, n+1)
+	for i := range dp {
+		dp[i] = make([]int, m+1)
+		dp[i][0] = i
+	}
+	for j := 0; j <= m; j++ {
+		dp[0][j] = j
+	}
+	for i := 1; i <= n; i++ {
+		for j := 1; j <= m; j++ {
+			cost := 0
+			if r1[i-1] != r2[j-1] {
+				cost = 1
+			}
+			a := dp[i-1][j] + 1
+			b := dp[i][j-1] + 1
+			c := dp[i-1][j-1] + cost
+			minVal := a
+			if b < minVal {
+				minVal = b
+			}
+			if c < minVal {
+				minVal = c
+			}
+			dp[i][j] = minVal
+		}
+	}
+	return dp[n][m]
 }
 
 // GetStats returns summary counts of all entities in the database.

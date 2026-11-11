@@ -124,3 +124,54 @@ func TestDocumentCreateAndList(t *testing.T) {
 		t.Fatalf("expected 1 document, got %d", len(docs))
 	}
 }
+
+func TestDuplicatesAndMergeAPI(t *testing.T) {
+	srv := setupTestServer(t)
+
+	srv.store.UpsertNode(&graph.Node{ID: "globex_corp", Name: "Globex Corporation", EntityType: "ORGANIZATION"})
+	srv.store.UpsertNode(&graph.Node{ID: "globex", Name: "Globex Corp", EntityType: "ORGANIZATION"})
+
+	// GET duplicates
+	req := httptest.NewRequest(http.MethodGet, "/api/nodes/duplicates", nil)
+	w := httptest.NewRecorder()
+	srv.mux.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 from duplicates endpoint, got %d", w.Code)
+	}
+
+	// POST merge
+	mergeBody, _ := json.Marshal(map[string]interface{}{
+		"canonical_id":  "globex_corp",
+		"duplicate_ids": []string{"globex"},
+	})
+	reqMerge := httptest.NewRequest(http.MethodPost, "/api/nodes/merge", bytes.NewReader(mergeBody))
+	wMerge := httptest.NewRecorder()
+	srv.mux.ServeHTTP(wMerge, reqMerge)
+	if wMerge.Code != http.StatusOK {
+		t.Fatalf("expected 200 from merge endpoint, got %d", wMerge.Code)
+	}
+}
+
+func TestCommunitiesAPI(t *testing.T) {
+	srv := setupTestServer(t)
+
+	srv.store.UpsertNode(&graph.Node{ID: "n1", Name: "Node 1", EntityType: "ORGANIZATION"})
+	srv.store.UpsertNode(&graph.Node{ID: "n2", Name: "Node 2", EntityType: "ORGANIZATION"})
+	srv.store.UpsertEdge(&graph.Edge{ID: "e1", SourceNodeID: "n1", TargetNodeID: "n2", RelationType: "CONNECTS"})
+
+	// Trigger generate
+	reqGen := httptest.NewRequest(http.MethodPost, "/api/communities/generate", nil)
+	wGen := httptest.NewRecorder()
+	srv.mux.ServeHTTP(wGen, reqGen)
+	if wGen.Code != http.StatusOK {
+		t.Fatalf("expected 200 from community generate, got %d", wGen.Code)
+	}
+
+	// List
+	reqList := httptest.NewRequest(http.MethodGet, "/api/communities", nil)
+	wList := httptest.NewRecorder()
+	srv.mux.ServeHTTP(wList, reqList)
+	if wList.Code != http.StatusOK {
+		t.Fatalf("expected 200 from community list, got %d", wList.Code)
+	}
+}

@@ -28,6 +28,8 @@ type CitationRef struct {
 // QueryRequest configures the multi-hop reasoning search.
 type QueryRequest struct {
 	Query     string `json:"query"`
+	Mode      string `json:"mode,omitempty"`      // "local", "global", or "" for auto
+	AsOf      string `json:"as_of,omitempty"`     // Temporal filter (YYYY-MM-DD)
 	MaxHops   int    `json:"max_hops,omitempty"`
 	TopK      int    `json:"top_k,omitempty"`
 	BeamWidth int    `json:"beam_width,omitempty"`
@@ -35,14 +37,19 @@ type QueryRequest struct {
 
 // QueryResponse delivers the complete grounded answer and multi-hop reasoning trace.
 type QueryResponse struct {
-	Query           string                `json:"query"`
-	Answer          string                `json:"answer"`
-	SubGoals        []string              `json:"sub_goals"`
-	SeedEntities    []*graph.Node         `json:"seed_entities"`
-	ReasoningPaths  []graph.ReasoningPath `json:"reasoning_paths"`
-	Citations       []CitationRef         `json:"citations"`
-	ExecutionTimeMs int64                 `json:"execution_time_ms"`
-	HallucinationRisk float64             `json:"hallucination_risk"`
+	Query             string                `json:"query"`
+	Answer            string                `json:"answer"`
+	Mode              string                `json:"mode"`
+	SubGoals          []string              `json:"sub_goals"`
+	SeedEntities      []*graph.Node         `json:"seed_entities"`
+	ReasoningPaths    []graph.ReasoningPath `json:"reasoning_paths"`
+	Citations         []CitationRef         `json:"citations"`
+	ExecutionTimeMs   int64                 `json:"execution_time_ms"`
+	HallucinationRisk float64               `json:"hallucination_risk"`
+	ContextRelevance  float64               `json:"context_relevance"`
+	Groundedness      float64               `json:"groundedness"`
+	AnswerRelevance   float64               `json:"answer_relevance"`
+	Communities       []*graph.Community    `json:"communities,omitempty"`
 }
 
 // StepHandler receives real-time progress callbacks during query execution.

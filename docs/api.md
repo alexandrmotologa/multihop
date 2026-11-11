@@ -45,20 +45,37 @@ Request:
 ```json
 {
   "query": "Did the company acquire patents from Vendor X subsidiaries?",
+  "mode": "local",
+  "as_of": "2023-01-01",
   "max_hops": 3,
   "top_k": 5
 }
 ```
+
+Parameters:
+- `query` (string, required): Natural language relational reasoning question.
+- `mode` (string, optional): `"local"` (bounded beam multi-hop), `"global"` (community-level summary search), or `""`/`"auto"` (hybrid auto-routing).
+- `as_of` (string, optional): Temporal snapshot filter (`YYYY-MM-DD`) restricting edges to valid relationships at that date.
+- `max_hops` (int, optional): Traversal depth limit (default 3).
+- `top_k` (int, optional): Top candidate chunks to retrieve for synthesis (default 5).
 
 Response:
 ```json
 {
   "query": "Did the company acquire patents from Vendor X subsidiaries?",
   "answer": "Yes. Vendor Alpha owns Subsidiary Beta, which held Patent 9821, transferred to the parent company in 2022 [^c_8a1f].",
+  "mode": "local",
+  "sub_goals": ["Identify subsidiaries of Vendor Alpha", "Trace patent holdings"],
   "reasoning_paths": [
     {
-      "nodes": ["vendor_alpha", "subsidiary_beta", "patent_9821", "acme_corp"],
-      "relations": ["OWNS", "HOLDS", "TRANSFERRED_TO"],
+      "steps": [
+        {
+          "source_node": {"id": "vendor_alpha", "name": "Vendor Alpha"},
+          "edge": {"relation_type": "OWNS"},
+          "target_node": {"id": "subsidiary_beta", "name": "Subsidiary Beta"},
+          "score": 1.0
+        }
+      ],
       "score": 0.842
     }
   ],
@@ -68,10 +85,14 @@ Response:
       "document_id": "doc_01",
       "document_title": "2022 IP Transfer Agreement",
       "content": "Subsidiary Beta hereby transfers all rights to Patent 9821 to Acme Corp...",
-      "relevance_score": 0.912
+      "relevance": 0.912
     }
   ],
-  "execution_time_ms": 142
+  "execution_time_ms": 14,
+  "hallucination_risk": 0.02,
+  "context_relevance": 0.96,
+  "groundedness": 0.98,
+  "answer_relevance": 0.92
 }
 ```
 
@@ -175,3 +196,71 @@ Lists chunks belonging to a document.
 
 #### `POST /api/documents`
 Uploads and indexes a new document file.
+
+#### `POST /api/documents/upload`
+Uploads a document via `multipart/form-data` with automatic heading-aware chunking, vector embedding, and entity-relation extraction.
+
+Response:
+```json
+{
+  "message": "Document parsed and indexed successfully",
+  "document_id": "doc_8f12a",
+  "title": "VendorAgreement.md",
+  "chunks_count": 4,
+  "nodes_extracted": 12,
+  "edges_extracted": 5
+}
+```
+
+---
+
+### 5. Cypher-Lite Pattern Matching
+
+#### `POST /api/cypher`
+Executes Cypher-Lite property graph queries directly against SQLite recursive CTEs.
+
+Request:
+```json
+{
+  "query": "MATCH (a:ORGANIZATION)-[r:OWNS]->(b) RETURN a, r, b"
+}
+```
+
+Response:
+```json
+{
+  "query": "MATCH (a:ORGANIZATION)-[r:OWNS]->(b) RETURN a, r, b",
+  "count": 1,
+  "results": [
+    {
+      "a": {"id": "vendor_alpha", "name": "Vendor Alpha", "type": "ORGANIZATION"},
+      "r": {"id": "e_101", "relation": "OWNS", "weight": 1.0},
+      "b": {"id": "subsidiary_beta", "name": "Subsidiary Beta", "type": "ORGANIZATION"}
+    }
+  ]
+}
+```
+
+---
+
+### 6. Entity Disambiguation and Communities
+
+#### `GET /api/nodes/duplicates`
+Returns pairs of potential duplicate entity candidates based on normalized edit distance and acronym expansion.
+
+#### `POST /api/nodes/merge`
+Merges one or more duplicate entities into a canonical node, remapping edges and registering aliases.
+
+Request:
+```json
+{
+  "canonical_id": "vendor_alpha",
+  "duplicate_ids": ["vendor_alpha_corp", "vendor_alpha_inc"]
+}
+```
+
+#### `GET /api/communities`
+Lists all detected entity communities generated via Label Propagation Algorithm (LPA).
+
+#### `POST /api/communities/generate`
+Re-runs community detection and generates cluster summaries across the entire property graph.

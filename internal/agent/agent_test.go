@@ -114,4 +114,26 @@ func TestCoordinatorMultiHopFlow(t *testing.T) {
 	if len(emittedSteps) < 5 {
 		t.Errorf("expected at least 5 reasoning steps emitted, got %d", len(emittedSteps))
 	}
+
+	// Verify RAG Triad scores
+	if resp.ContextRelevance <= 0 || resp.Groundedness <= 0 || resp.AnswerRelevance <= 0 {
+		t.Errorf("expected positive RAG Triad scores, got Context: %f, Groundedness: %f, Answer: %f",
+			resp.ContextRelevance, resp.Groundedness, resp.AnswerRelevance)
+	}
+
+	// Test Global Search
+	globalReq := QueryRequest{
+		Query: "Summarize all main entities and clusters across the entire corpus",
+		Mode:  "global",
+	}
+	globalResp, err := coord.ExecuteQuery(context.Background(), globalReq, nil)
+	if err != nil {
+		t.Fatalf("global query error: %v", err)
+	}
+	if globalResp.Mode != "global" {
+		t.Errorf("expected mode 'global', got '%s'", globalResp.Mode)
+	}
+	if len(globalResp.Communities) == 0 {
+		t.Errorf("expected community summaries in global response")
+	}
 }
