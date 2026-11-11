@@ -24,6 +24,7 @@ import {
   Calendar,
   Sliders,
   Layers,
+  Menu,
   X
 } from 'lucide-react';
 import GraphCanvas, { GraphNode, GraphLink, ActiveHopInfo } from './components/GraphCanvas';
@@ -90,6 +91,15 @@ export default function App() {
   // Modals
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isDedupOpen, setIsDedupOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navItems = [
+    { id: 'studio' as const, label: 'Multi-Hop Studio', icon: Sparkles },
+    { id: 'graph' as const, label: 'Graph Explorer', icon: Network },
+    { id: 'cypher' as const, label: 'Cypher Console', icon: Terminal },
+    { id: 'documents' as const, label: 'Corpus Documents', icon: FileText },
+    { id: 'benchmark' as const, label: 'RAG Benchmark', icon: Activity },
+  ];
 
   // Reasoning Path Player State
   const [selectedTrajectoryIdx, setSelectedTrajectoryIdx] = useState<number>(0);
@@ -265,8 +275,8 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#090d16] text-slate-100">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-800/80 bg-slate-950/60 flex flex-col justify-between p-4">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex md:w-64 border-r border-slate-800/80 bg-slate-950/60 flex-col justify-between p-4 shrink-0">
         <div>
           {/* Logo / Header */}
           <div className="flex items-center gap-3 px-2 py-3 mb-6 border-b border-slate-800/60">
@@ -286,65 +296,24 @@ export default function App() {
 
           {/* Navigation */}
           <nav className="space-y-1">
-            <button
-              onClick={() => setActiveTab('studio')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'studio'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Multi-Hop Studio</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('graph')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'graph'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
-            >
-              <Network className="w-4 h-4" />
-              <span>Graph Explorer</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('cypher')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'cypher'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
-            >
-              <Terminal className="w-4 h-4" />
-              <span>Cypher Console</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('documents')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'documents'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>Corpus Documents</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('benchmark')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'benchmark'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
-            >
-              <Activity className="w-4 h-4" />
-              <span>RAG Benchmark</span>
-            </button>
+            {navItems.map(item => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 
@@ -378,65 +347,158 @@ export default function App() {
         </div>
       </aside>
 
+      {/* Mobile Drawer Navigation */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-72 bg-slate-950 border-r border-slate-800 p-4 flex flex-col justify-between h-full shadow-2xl">
+            <div>
+              <div className="flex items-center justify-between px-2 py-3 mb-6 border-b border-slate-800/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <Network className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="font-bold text-base tracking-tight text-white flex items-center gap-1.5">
+                      MultiHop
+                      <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/50">
+                        RAG
+                      </span>
+                    </h1>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <nav className="space-y-1">
+                {navItems.map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Mobile Diagnostics */}
+            <div className="bg-slate-900/40 border border-slate-800/60 rounded-xl p-3.5 space-y-3">
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+                  RAM Footprint
+                </span>
+                <span className="font-mono text-emerald-400 text-[11px] font-semibold">
+                  {health.memory_alloc_mb.toFixed(1)} MB
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/50 text-[11px]">
+                <div>
+                  <span className="text-slate-500 block">Entities</span>
+                  <span className="font-mono text-slate-200">{stats.nodes}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">Relations</span>
+                  <span className="font-mono text-slate-200">{stats.edges}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
+        </div>
+      )}
+
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="h-14 border-b border-slate-800/80 bg-slate-950/40 px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span>Knowledge Base</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-            <span className="text-slate-200 font-medium capitalize">
-              {activeTab === 'cypher' ? 'Cypher Console' : activeTab}
-            </span>
+        <header className="h-14 border-b border-slate-800/80 bg-slate-950/40 px-4 md:px-6 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 md:hidden"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span className="hidden sm:inline">Knowledge Base</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-600 hidden sm:inline" />
+              <span className="text-slate-200 font-medium capitalize">
+                {activeTab === 'cypher' ? 'Cypher Console' : activeTab}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {activeTab === 'graph' && (
               <button
                 onClick={() => setIsDedupOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-medium text-slate-200 transition-colors"
+                className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-medium text-slate-200 transition-colors"
               >
                 <GitMerge className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Entity Deduplication</span>
+                <span className="hidden sm:inline">Entity Deduplication</span>
+                <span className="sm:hidden">Merge</span>
               </button>
             )}
 
             {activeTab === 'documents' && (
               <button
                 onClick={() => setIsUploadOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-xs font-medium text-white transition-colors shadow-lg shadow-cyan-600/20"
+                className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-xs font-medium text-white transition-colors shadow-lg shadow-cyan-600/20"
               >
                 <UploadCloud className="w-3.5 h-3.5" />
-                <span>Upload Document</span>
+                <span className="hidden sm:inline">Upload Document</span>
+                <span className="sm:hidden">Upload</span>
               </button>
             )}
 
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+            <span className="inline-flex items-center gap-1.5 px-2 md:px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              SQLite WAL Active
+              <span className="hidden sm:inline">SQLite WAL Active</span>
+              <span className="sm:hidden">WAL</span>
             </span>
           </div>
         </header>
 
         {/* View Switcher */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 md:p-6">
           {activeTab === 'studio' && (
             <div className="max-w-5xl mx-auto space-y-6">
               {/* Query Input Card */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 md:p-5 shadow-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <span className="text-xs font-mono uppercase tracking-wider text-cyan-400 flex items-center gap-2">
                     <Sparkles className="w-4 h-4" />
                     Multi-Hop Reasoning Query
                   </span>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     {/* Search Mode Selector */}
                     <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-0.5 text-xs font-medium">
                       {(['auto', 'local', 'global'] as const).map(m => (
                         <button
                           key={m}
                           onClick={() => setQueryMode(m)}
-                          className={`px-2.5 py-1 rounded-md capitalize transition-colors ${
+                          className={`px-2 py-0.5 md:px-2.5 md:py-1 rounded-md capitalize transition-colors text-[11px] md:text-xs ${
                             queryMode === m
                               ? 'bg-cyan-500/20 text-cyan-300 font-semibold'
                               : 'text-slate-400 hover:text-slate-200'
@@ -707,8 +769,8 @@ export default function App() {
           )}
 
           {activeTab === 'graph' && (
-            <div className="h-full flex gap-4">
-              <div className="flex-1 h-full min-h-[500px]">
+            <div className="h-full flex flex-col md:flex-row gap-4 relative">
+              <div className="flex-1 h-full min-h-[350px]">
                 <GraphCanvas
                   nodes={graphData.nodes}
                   links={graphData.links}
@@ -721,13 +783,22 @@ export default function App() {
 
               {/* Node Inspector Panel */}
               {selectedNode && (
-                <div className="w-80 bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                <div className="w-full md:w-80 bg-slate-900/95 md:bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between shrink-0 shadow-2xl md:shadow-none">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <span className="text-xs uppercase font-mono text-cyan-400">Entity Details</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                        {selectedNode.entity_type}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                          {selectedNode.entity_type}
+                        </span>
+                        <button
+                          onClick={() => setSelectedNode(null)}
+                          className="text-slate-400 hover:text-white p-0.5"
+                          title="Close panel"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     <div>
@@ -752,7 +823,7 @@ export default function App() {
                       setQueryInput(`Tell me about ${selectedNode.name} and its relationships`);
                       setActiveTab('studio');
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200"
+                    className="w-full flex items-center justify-center gap-2 py-2 mt-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition-colors"
                   >
                     <Search className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Query Node in Studio</span>

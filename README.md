@@ -1,6 +1,27 @@
-# MultiHop
+<p align="center">
+  <img src="docs/images/logo.png?raw=true" alt="MultiHop Logo" width="130" style="border-radius: 24px;" />
+</p>
 
-Agentic Multi-Hop GraphRAG Engine with Hybrid Vector-Graph Retrieval and SQLite Property Graph.
+<h1 align="center">MultiHop</h1>
+
+<p align="center">
+  <a href="https://github.com/alexandrmotologa/multihop/actions"><img src="https://github.com/alexandrmotologa/multihop/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
+  <img src="https://img.shields.io/badge/go-1.24-00ADD8?logo=go" alt="Go Version" />
+  <img src="https://img.shields.io/badge/SQLite-WAL%20%2B%20FTS5-003B57?logo=sqlite" alt="SQLite" />
+  <img src="https://img.shields.io/badge/RAM-%3C%2030MB-10B981" alt="RAM Target" />
+  <img src="https://img.shields.io/badge/frontend-React%2019-61DAFB?logo=react" alt="React 19" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
+</p>
+
+<p align="center">
+  <strong>Agentic Multi-Hop GraphRAG Engine with Hybrid Vector-Graph Retrieval and SQLite Property Graph</strong>
+</p>
+
+<p align="center">
+  <img src="docs/images/multihop_demo.gif?raw=true" alt="MultiHop Demo Walkthrough" width="100%" style="border-radius: 12px; border: 1px solid #1e293b;" />
+</p>
+
+---
 
 MultiHop is a single-binary retrieval engine designed to solve relational reasoning queries where standard vector search fails. It automatically extracts entities and directed relations into an embedded SQLite property graph, plans multi-step graph traversals, and combines graph evidence paths with dense vector and BM25 search.
 
@@ -67,6 +88,43 @@ MultiHop addresses this without requiring external graph infrastructure:
    +-------------------------------+         +-------------------------------+
 ```
 
+## Visual Studio and Interfaces
+
+### Multi-Hop Studio with Reasoning Player
+Execute multi-hop queries, inspect decomposed sub-goals, step through relational hops with the interactive player, and verify strict citation footnotes with real-time RAG Triad diagnostic metrics.
+
+<p align="center">
+  <img src="docs/images/multihop_studio.png?raw=true" alt="Multi-Hop Studio" width="100%" style="border-radius: 10px; border: 1px solid #1e293b;" />
+</p>
+
+### Interactive 2D/3D Knowledge Graph Explorer
+Inspect entity nodes, directed relationship edges, and community clusters with force-directed physics layout, active hop laser pulse animations, and detailed entity sidebars.
+
+<p align="center">
+  <img src="docs/images/multihop_graph.png?raw=true" alt="Graph Explorer" width="100%" style="border-radius: 10px; border: 1px solid #1e293b;" />
+</p>
+
+### Cypher-Lite Micro Query Console
+Execute open Cypher pattern matching queries directly against SQLite recursive common table expressions (CTEs) with instant JSON record inspection.
+
+<p align="center">
+  <img src="docs/images/multihop_cypher.png?raw=true" alt="Cypher Console" width="100%" style="border-radius: 10px; border: 1px solid #1e293b;" />
+</p>
+
+### Empirical Architecture Benchmark
+Compare Naive Vector RAG against MultiHop GraphRAG side-by-side on real relational multi-hop queries measuring latency, path recovery, and grounding accuracy.
+
+<p align="center">
+  <img src="docs/images/multihop_benchmark.png?raw=true" alt="Architecture Benchmark" width="100%" style="border-radius: 10px; border: 1px solid #1e293b;" />
+</p>
+
+### Responsive Multi-Device Adaptability
+The Studio and Graph interfaces adapt dynamically across mobile, tablet, and widescreen viewports with slide-out navigation drawers and touch-friendly controls.
+
+<p align="center">
+  <img src="docs/images/multihop_mobile.png?raw=true" alt="Mobile View" width="380" style="border-radius: 16px; border: 1px solid #1e293b;" />
+</p>
+
 ## Quick Start
 
 ### Installation
@@ -102,7 +160,7 @@ go build -o multihop ./cmd/multihop
 4. Find the shortest reasoning path between two entities:
 
 ```bash
-./multihop path --from "Vendor Alpha" --to "Liability Cap" --db ./knowledge.db
+./multihop path --from "Vendor Alpha" --to "Patent 9821" --db ./knowledge.db
 ```
 
 5. Launch the Web Studio:

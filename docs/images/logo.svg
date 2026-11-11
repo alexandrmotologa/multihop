@@ -1,0 +1,229 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <clipPath id="squircle-clip">
+      <rect x="24" y="24" width="976" height="976" rx="220" />
+    </clipPath>
+
+    <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5ff"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+
+    <linearGradient id="cyan-eye" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#00f5ff"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+
+    <filter id="subtle-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.16" />
+    </filter>
+  </defs>
+
+  <!-- Luxury White Squircle Container -->
+  <rect x="24" y="24" width="976" height="976" rx="220" fill="#ffffff" stroke="#e2e8f0" stroke-width="6" />
+
+  <g clip-path="url(#squircle-clip)">
+    <g transform="translate(512, 512)" filter="url(#subtle-shadow)">
+
+      <!-- Hexagonal Architectural Gateway Frame -->
+      <polygon points="
+        0,-400
+        346,-200
+        346,200
+        0,400
+        -346,200
+        -346,-200
+      " fill="none" stroke="#0f172a" stroke-width="40" stroke-linejoin="round" />
+
+      <polygon points="
+        0,-362
+        313,-181
+        313,181
+        0,362
+        -313,181
+        -313,-181
+      " fill="none" stroke="#00f5ff" stroke-width="4" opacity="0.45" stroke-dasharray="16, 12" />
+
+      <!-- Graph Traversal Coordinate Orbit -->
+      <circle cx="0" cy="0" r="280" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-dasharray="4, 8" opacity="0.6"/>
+      <line x1="-240" y1="-120" x2="-140" y2="-180" stroke="#00f5ff" stroke-width="2" opacity="0.3" />
+      <line x1="240" y1="-120" x2="140" y2="-180" stroke="#00f5ff" stroke-width="2" opacity="0.3" />
+
+      <!-- ======================================================== -->
+      <!-- WATERTIGHT SOLID BASE SILHOUETTE (Zero-leak background) -->
+      <!-- ======================================================== -->
+      <path d="
+        M 0 -180
+        L 80 -195
+        L 145 -245
+        L 215 -225
+        L 240 -160
+        L 230 -100
+        L 265 -35
+        L 290 55
+        L 295 155
+        L 275 235
+        L 210 265
+        L 145 250
+        L 90 235
+        L 50 255
+        L 0 265
+        L -50 255
+        L -90 235
+        L -145 250
+        L -210 265
+        L -275 235
+        L -295 155
+        L -290 55
+        L -265 -35
+        L -230 -100
+        L -240 -160
+        L -215 -225
+        L -145 -245
+        L -80 -195
+        Z
+      " fill="#0b0f19" stroke="#0b0f19" stroke-width="4" stroke-linejoin="round" />
+
+      <!-- ======================================================== -->
+      <!-- 85% MASS MASCOT: CYBERNETIC TREE FROG (Origami Low-Poly) -->
+      <!-- ======================================================== -->
+
+      <!-- Folded Hind Legs (Coiled for multi-hop trajectory leap) -->
+      <!-- Right Hind Leg Facets -->
+      <polygon points="230,-100 265,-35 220,35 175,-25" fill="#1e293b" />
+      <polygon points="265,-35 290,55 240,120 220,35" fill="#0f172a" />
+      <polygon points="290,55 295,155 245,185 240,120" fill="#1e293b" />
+      <polygon points="295,155 275,235 225,230 245,185" fill="#0f172a" />
+      <polygon points="275,235 210,265 175,220 225,230" fill="#1e293b" />
+
+      <!-- Left Hind Leg Facets (Mirrored) -->
+      <polygon points="-230,-100 -265,-35 -220,35 -175,-25" fill="#334155" />
+      <polygon points="-265,-35 -290,55 -240,120 -220,35" fill="#1e293b" />
+      <polygon points="-290,55 -295,155 -245,185 -240,120" fill="#334155" />
+      <polygon points="-295,155 -275,235 -225,230 -245,185" fill="#1e293b" />
+      <polygon points="-275,235 -210,265 -175,220 -225,230" fill="#334155" />
+
+      <!-- Forelimbs / Front Arms -->
+      <!-- Right Forearm -->
+      <polygon points="120,40 180,95 150,175 90,120" fill="#334155" />
+      <polygon points="180,95 215,150 175,205 150,175" fill="#1e293b" />
+      <polygon points="150,175 175,205 130,245 95,195" fill="#475569" />
+
+      <!-- Left Forearm (Mirrored) -->
+      <polygon points="-120,40 -180,95 -150,175 -90,120" fill="#475569" />
+      <polygon points="-180,95 -215,150 -175,205 -150,175" fill="#334155" />
+      <polygon points="-150,175 -175,205 -130,245 -95,195" fill="#64748b" />
+
+      <!-- Body / Throat & Pectoral Armor (Broad chest, no trunk illusion) -->
+      <!-- Throat / Vocal Sac -->
+      <polygon points="0,-45 70,-45 50,30 0,15" fill="#475569" />
+      <polygon points="0,-45 -70,-45 -50,30 0,15" fill="#64748b" />
+
+      <!-- Chest / Pectoral Plates -->
+      <polygon points="0,15 50,30 90,120 0,95" fill="#334155" />
+      <polygon points="0,15 -50,30 -90,120 0,95" fill="#475569" />
+
+      <polygon points="50,30 120,40 90,120" fill="#1e293b" />
+      <polygon points="-50,30 -120,40 -90,120" fill="#334155" />
+
+      <!-- Abdomen & Pelvis -->
+      <polygon points="0,95 90,120 60,195 0,170" fill="#475569" />
+      <polygon points="0,95 -90,120 -60,195 0,170" fill="#64748b" />
+
+      <polygon points="0,170 60,195 0,250 -60,195" fill="#1e293b" />
+
+      <!-- ======================================================== -->
+      <!-- WIDE PARABOLIC HEAD ARCHITECTURE                         -->
+      <!-- ======================================================== -->
+
+      <!-- Broad Parabolic Mouth Line (Clear horizontal boundary) -->
+      <polygon points="0,-75 60,-65 130,-75 70,-45 0,-45" fill="#1e293b" />
+      <polygon points="0,-75 -60,-65 -130,-75 -70,-45 0,-45" fill="#0f172a" />
+      <polygon points="130,-75 190,-90 175,-25 120,40 70,-45" fill="#0f172a" />
+      <polygon points="-130,-75 -190,-90 -175,-25 -120,40 -70,-45" fill="#1e293b" />
+
+      <!-- Snout & Nasal Bridge (Compact, broad, aerodynamic) -->
+      <polygon points="0,-165 50,-130 0,-75 -50,-130" fill="#64748b" />
+      <polygon points="0,-165 80,-195 65,-140 50,-130" fill="#475569" />
+      <polygon points="0,-165 -80,-195 -65,-140 -50,-130" fill="#64748b" />
+
+      <!-- Upper Jaw Flanks -->
+      <polygon points="50,-130 65,-140 125,-125 60,-65 0,-75" fill="#475569" />
+      <polygon points="-50,-130 -65,-140 -125,-125 -60,-65 0,-75" fill="#64748b" />
+
+      <polygon points="60,-65 125,-125 185,-110 130,-75" fill="#334155" />
+      <polygon points="-60,-65 -125,-125 -185,-110 -130,-75" fill="#475569" />
+
+      <polygon points="130,-75 185,-110 230,-100 190,-90" fill="#1e293b" />
+      <polygon points="-130,-75 -185,-110 -230,-100 -190,-90" fill="#334155" />
+
+      <!-- Eye Turrets / Orbital Domes (Elevated lateral peaks) -->
+      <!-- Right Eye Turret -->
+      <polygon points="80,-195 145,-245 180,-195 125,-165 65,-140" fill="#334155" />
+      <polygon points="145,-245 215,-225 220,-170 180,-195" fill="#1e293b" />
+      <polygon points="180,-195 220,-170 185,-140 125,-165" fill="#334155" />
+      <polygon points="215,-225 240,-160 220,-170" fill="#0f172a" />
+      <polygon points="220,-170 240,-160 230,-100 185,-110 185,-140" fill="#1e293b" />
+      <polygon points="65,-140 125,-165 185,-140 185,-110 125,-125" fill="#334155" />
+
+      <!-- Left Eye Turret (Mirrored) -->
+      <polygon points="-80,-195 -145,-245 -180,-195 -125,-165 -65,-140" fill="#64748b" />
+      <polygon points="-145,-245 -215,-225 -220,-170 -180,-195" fill="#475569" />
+      <polygon points="-180,-195 -220,-170 -185,-140 -125,-165" fill="#475569" />
+      <polygon points="-215,-225 -240,-160 -220,-170" fill="#1e293b" />
+      <polygon points="-220,-170 -240,-160 -230,-100 -185,-110 -185,-140" fill="#334155" />
+      <polygon points="-65,-140 -125,-165 -185,-140 -185,-110 -125,-125" fill="#475569" />
+
+      <!-- ======================================================== -->
+      <!-- PREDATOR & ALERT OPTICS (Almond Geometric Tree Frog Eyes) -->
+      <!-- ======================================================== -->
+
+      <!-- Right Eye Socket -->
+      <polygon points="135,-200 198,-182 202,-148 140,-158" fill="#090d16" />
+      <!-- Right Glowing Iris -->
+      <polygon points="138,-196 194,-179 198,-151 143,-160" fill="url(#cyan-eye)" />
+      <!-- Right Horizontal Predator Pupil -->
+      <polygon points="154,-186 182,-177 178,-160 150,-168" fill="#06121e" />
+      <!-- Right Specular Glimmer -->
+      <polygon points="145,-191 155,-188 152,-180 143,-183" fill="#ffffff" />
+
+      <!-- Left Eye Socket (Mirrored) -->
+      <polygon points="-135,-200 -198,-182 -202,-148 -140,-158" fill="#090d16" />
+      <!-- Left Glowing Iris -->
+      <polygon points="-138,-196 -194,-179 -198,-151 -143,-160" fill="url(#cyan-eye)" />
+      <!-- Left Horizontal Predator Pupil -->
+      <polygon points="-154,-186 -182,-177 -178,-160 -150,-168" fill="#06121e" />
+      <!-- Left Specular Glimmer -->
+      <polygon points="-145,-191 -155,-188 -152,-180 -143,-183" fill="#ffffff" />
+
+      <!-- ======================================================== -->
+      <!-- TOPOLOGICAL GRAPH NODES (Circular vertex suction pads)   -->
+      <!-- Anchoring the multi-hop leaper to property graph vertices -->
+      <!-- ======================================================== -->
+
+      <!-- Right Hand Node Pads -->
+      <circle cx="115" cy="245" r="16" fill="url(#cyan-glow)" stroke="#090d16" stroke-width="3" />
+      <circle cx="150" cy="240" r="14" fill="url(#cyan-glow)" stroke="#090d16" stroke-width="3" />
+      <circle cx="178" cy="215" r="13" fill="url(#cyan-glow)" stroke="#090d16" stroke-width="3" />
+
+      <!-- Left Hand Node Pads -->
+      <circle cx="-115" cy="245" r="16" fill="url(#cyan-glow)" stroke="#090d16" stroke-width="3" />
+      <circle cx="-150" cy="240" r="14" fill="url(#cyan-glow)" stroke="#090d16" stroke-width="3" />
+      <circle cx="-178" cy="215" r="13" fill="url(#cyan-glow)" stroke="#090d16" stroke-width="3" />
+
+      <!-- Feet Node Anchors -->
+      <circle cx="210" cy="275" r="12" fill="#00f5ff" opacity="0.85" />
+      <circle cx="-210" cy="275" r="12" fill="#00f5ff" opacity="0.85" />
+
+      <!-- Central Quantum Neural Core (Diamond node in sternum) -->
+      <polygon points="0,55 18,80 0,105 -18,80" fill="url(#cyan-glow)" stroke="#ffffff" stroke-width="2" />
+      <circle cx="0" cy="80" r="4" fill="#ffffff" />
+
+      <!-- Multi-Hop Trajectory Vectors (Subtle dashed traversal lines) -->
+      <line x1="0" y1="80" x2="115" y2="245" stroke="#00f5ff" stroke-width="2" opacity="0.35" stroke-dasharray="6, 6" />
+      <line x1="0" y1="80" x2="-115" y2="245" stroke="#00f5ff" stroke-width="2" opacity="0.35" stroke-dasharray="6, 6" />
+
+    </g>
+  </g>
+</svg>
